@@ -4,7 +4,7 @@ import RPi.GPIO as GPIO
 import mysql.connector
 import re
 import time
-
+import yaml
 
 
 class Database:
@@ -61,14 +61,10 @@ class Sensor:
     return temperature
 
 
-database = Database(
-  user="thermostatd",
-  password="hackme",
-  host="127.0.0.1",
-  database="thermostat"
-)
-serial = database.getSensorSerial()
+database_config = yaml.load(open("mysql_conf.yaml"))
+database = Database(**database_config)
 
+serial = database.getSensorSerial()
 sensor = Sensor(serial)
 
 while True:
