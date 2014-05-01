@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+
+import RPi.GPIO as GPIO
+import mysql.connector
+import re
+import time
+
+
+
+class Database:
+  def __init__(self, user, password, host, database):
+    self.connection = mysql.connector.connect(
+      user=user,
+      password=password,
+      host=host,
+      database=database
+    )
+
+  def setTemperature(self, temperature):
+    cursor = self.connection.cursor()
+    cursor.execute("update sensor set temperature = %s", (temperature,))
+    cursor.close()
+    self.connection.commit()
+
+  def getSensorSerial(self):
+    cursor = self.connection.cursor()
+    cursor.execute("select serial from sensor")
+    serial = cursor.fetchone()[0]
+    cursor.close()
+
+    return serial
+    
+
+class Relay:
+  def __init__(self, channel):
+    self.channel = channel
+
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(self.channel, GPIO.OUT)
+
+  def setState(self, state):
+    GPIO.output(self.channel, state)
+
+  def cleanup(self):
+    self.setState(False)
+    GPIO.cleanup(self.channel)
+
+
+class Sensor:
+  def __init__(self, serial):
+    self.serial = serial
+
+  def read(self):
+    temperature_file = open("/sys/bus/w1/devices/%s/w1_slave" % self.serial)
+    temperature_data = temperature_file.read()
+    temperature_file.close()
+
+    match = re.search("t=(?P<temperature>\d+)", temperature_data)
+    temperature = float(match.group("temperature")) / 1000
+
+    return temperature
+
+
+database = Database(
+  user="thermostatd",
+  password="hackme",
+  host="127.0.0.1",
+  database="thermostat"
+)
+serial = database.getSensorSerial()
+
+sensor = Sensor(serial)
+
+while True:
+  time.sleep(5)
+  temperature = sensor.read()
+  print(temperature)
+  database.setTemperature(temperature)
+
+relay = Relay(16)
+relay.setState(True)
+relay.cleanup()
+
