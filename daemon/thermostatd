@@ -5,75 +5,193 @@ import mysql.connector
 import re
 import time
 import yaml
+import datetime
 
+
+class MySQLCursorDict(mysql.connector.cursor.MySQLCursor):
+  def _row_to_python(self, rowdata, desc=None):
+    row = super(MySQLCursorDict, self)._row_to_python(rowdata, desc)
+
+    if row:
+      return dict(zip(self.column_names, row))
+
+    return None
 
 class Database:
-  def __init__(self, user, password, host, database):
-    self.connection = mysql.connector.connect(
-      user=user,
-      password=password,
-      host=host,
-      database=database
-    )
+  def __init__(self, database_config):
+    self.connection = mysql.connector.connect(**database_config)
 
-  def setTemperature(self, temperature):
+  def GetActiveSensors(self):
+    cursor = self.connection.cursor(cursor_class=MySQLCursorDict)
+    cursor.execute("""
+      SELECT
+        id,
+        serial
+
+      FROM
+        sensors
+
+      WHERE
+        enabled = true
+    """)
+    sensors = cursor.fetchall()
+    cursor.close()
+
+    return sensors
+    
+  def GetActiveRelays(self):
+    cursor = self.connection.cursor(cursor_class=MySQLCursorDict)
+    cursor.execute("""
+      SELECT
+        id,
+        channel
+
+      FROM
+        relays
+
+      WHERE
+        enabled = true
+    """)
+    relays = cursor.fetchall()
+    cursor.close()
+
+    return relays
+
+  def UpdateSensorTemperature(self, sensor_id, temperature):
     cursor = self.connection.cursor()
-    cursor.execute("update sensor set temperature = %s", (temperature,))
+    cursor.execute("""
+      UPDATE
+        sensors
+
+      SET
+        temperature = %s
+
+      WHERE
+        id = %s
+    """, (temperature, sensor_id))
     cursor.close()
     self.connection.commit()
 
-  def getSensorSerial(self):
+  def UpdateRelayState(self, relay_id, state):
     cursor = self.connection.cursor()
-    cursor.execute("select serial from sensor")
-    serial = cursor.fetchone()[0]
+    cursor.execute("""
+      UPDATE
+        relays
+
+      SET
+        state = %s
+
+      WHERE
+        id = %s
+    """, (state, relay_id))
+    cursor.close()
+    self.connection.commit()
+
+  def GetRelayEvents(self):
+    cursor = self.connection.cursor(cursor_class=MySQLCursorDict)
+    cursor.execute("""
+      SELECT
+        relays.id,
+        relays.channel,
+        ! relays.state AS new_state,
+        relays.enabled
+
+      FROM
+        thermostats
+        
+        JOIN relays
+          ON relays.id = thermostats.relay_id
+
+        JOIN sensors
+          ON sensors.id = thermostats.sensor_id
+
+      WHERE
+        (
+          (
+            relays.enabled = false
+            OR sensors.enabled = false
+            OR thermostats.enabled = false
+            OR sensors.temperature >= thermostats.desired_temperature +
+              thermostats.upper_deviation
+          ) AND relays.state = true
+        ) OR (
+          relays.enabled = true
+          AND sensors.enabled = true
+          AND thermostats.enabled = true
+          AND sensors.temperature <= thermostats.desired_temperature -
+            thermostats.lower_deviation
+          AND relays.state = false
+        )
+    """)
+    events = cursor.fetchall()
     cursor.close()
 
-    return serial
-    
+    return events
+
 
 class Relay:
   def __init__(self, channel):
     self.channel = channel
 
-    GPIO.setmode(GPIO.BOARD)
     GPIO.setup(self.channel, GPIO.OUT)
+    self.SetState(False)
 
-  def setState(self, state):
+  def SetState(self, state):
     GPIO.output(self.channel, state)
 
-  def cleanup(self):
-    self.setState(False)
+  def CleanUp(self):
+    self.SetState(False)
     GPIO.cleanup(self.channel)
 
 
-class Sensor:
-  def __init__(self, serial):
-    self.serial = serial
+def ReadSensorTemperature(serial):
+  temperature_file = open("/sys/bus/w1/devices/%s/w1_slave" % serial)
+  temperature_data = temperature_file.read()
+  temperature_file.close()
 
-  def read(self):
-    temperature_file = open("/sys/bus/w1/devices/%s/w1_slave" % self.serial)
-    temperature_data = temperature_file.read()
-    temperature_file.close()
-
-    match = re.search("t=(?P<temperature>\d+)", temperature_data)
-    temperature = float(match.group("temperature")) / 1000
-
-    return temperature
+  match = re.search("t=(\d+)", temperature_data)
+  temperature = float(match.group(1)) / 1000
+  
+  return temperature
 
 
-database_config = yaml.load(open("mysql_conf.yaml"))
-database = Database(**database_config)
+class Thermostat:
+  def __init__(self, database_config="mysql_conf.yaml"):
+    GPIO.setmode(GPIO.BOARD)
 
-serial = database.getSensorSerial()
-sensor = Sensor(serial)
+    database_config = yaml.load(open(database_config))
+    self.database = Database(database_config)
+    
+    self.active_relays = {
+        relay["id"]: Relay(relay["channel"]) for relay in
+        self.database.GetActiveRelays()}
 
-while True:
-  time.sleep(5)
-  temperature = sensor.read()
-  print(temperature)
-  database.setTemperature(temperature)
+  def UpdateTemperature(self, interval=5):
+    while True:
+      print(self.active_relays)
+      # FIXME: when running, setting a sensor to enabled = 0 then back to
+      # enabled = 1 doesn't trigger this.
+      for sensor in self.database.GetActiveSensors():
+        temperature = ReadSensorTemperature(sensor["serial"])
+        self.database.UpdateSensorTemperature(sensor["id"], temperature)
+        print(temperature)
 
-relay = Relay(16)
-relay.setState(True)
-relay.cleanup()
+      for relay in self.database.GetRelayEvents():
+        print(relay)
+        if relay["id"] not in self.active_relays:
+          self.active_relays[relay["id"]] = Relay(relay["channel"])
+
+        if not relay["enabled"]:
+          self.active_relays[relay["id"]].CleanUp()
+          del self.active_relays[relay["id"]]
+        else:
+          self.active_relays[relay["id"]].SetState(relay["new_state"])
+
+        self.database.UpdateRelayState(relay["id"], relay["new_state"])
+
+      time.sleep(interval)
+
+
+thermostat = Thermostat()
+thermostat.UpdateTemperature()
 
