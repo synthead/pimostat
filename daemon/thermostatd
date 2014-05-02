@@ -7,6 +7,7 @@ import re
 import time
 import yaml
 import signal
+import threading
 
 
 class Relay:
@@ -48,12 +49,12 @@ class Thermostat:
     for relay in relays:
       self.thermostat_api.UpdateRelayState(relay["id"], False)
 
-    self.shutdown_requested = False
+    self.shutdown_requested = threading.Event()
     for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT):
       signal.signal(sig, self.SignalHandler) 
 
   def SignalHandler(self, signum=None, frame=None):
-    self.shutdown_requested = True
+    self.shutdown_requested.set()
 
   def DisableRelays(self, relays):
     for relay_id in list(relays):
@@ -61,7 +62,7 @@ class Thermostat:
       del self.active_relays[relay_id]
 
   def UpdateLoop(self, interval=5):
-    while not self.shutdown_requested:
+    while not self.shutdown_requested.is_set():
       print(self.active_relays)
       for sensor in self.thermostat_api.GetActiveSensors():
         temperature = ReadSensorTemperature(sensor["serial"])
@@ -80,7 +81,7 @@ class Thermostat:
 
         self.thermostat_api.UpdateRelayState(relay["id"], relay["new_state"])
 
-      time.sleep(interval)
+      self.shutdown_requested.wait(interval)
 
     self.DisableRelays(self.active_relays)
 
