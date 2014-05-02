@@ -8,20 +8,29 @@ import time
 import yaml
 import signal
 import threading
+import logging
+import os
 
 
 class Relay:
-  def __init__(self, channel):
+  def __init__(self, channel, state=False):
+    logging.info("Initializing relay on channel %d.", channel)
     self.channel = channel
-
+    self.state = None
     GPIO.setup(self.channel, GPIO.OUT)
-    self.SetState(False)
+    self.SetState(state)
 
   def SetState(self, state):
+    logging.info(
+        "Setting relay on channel %d to %s.", self.channel,
+        ["off", "on"][state])
+    self.state = state
     GPIO.output(self.channel, state)
 
   def CleanUp(self):
-    self.SetState(False)
+    logging.info("Stopping relay on channel %d.", self.channel)
+    if self.state:
+      self.SetState(False)
     GPIO.cleanup(self.channel)
 
 
@@ -43,48 +52,57 @@ class Thermostat:
     database_config = yaml.load(open(database_config))
     self.thermostat_api = thermostat_api.ThermostatAPI(database_config)
 
-    relays = self.thermostat_api.GetActiveRelays()
-    self.active_relays = {
-        relay["id"]: Relay(relay["channel"]) for relay in relays}
-    for relay in relays:
-      self.thermostat_api.UpdateRelayState(relay["id"], False)
+    self.active_relays = {}
+    for id, channel, state in self.thermostat_api.GetActiveRelays():
+      self.EnableRelay(id, channel, state)
 
     self.shutdown_requested = threading.Event()
     for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT):
       signal.signal(sig, self.SignalHandler) 
 
-  def SignalHandler(self, signum=None, frame=None):
+  def SignalHandler(self, signal_number=None, frame=None):
+    logging.info("Received signal %s.", signal_number)
     self.shutdown_requested.set()
 
-  def DisableRelays(self, relays):
-    for relay_id in list(relays):
-      self.active_relays[relay_id].CleanUp()
-      del self.active_relays[relay_id]
+  def EnableRelay(self, id, channel, state=False):
+    self.active_relays[id] = Relay(channel, state)
+    self.thermostat_api.UpdateRelayState(id, state)
+
+  def DisableRelay(self, id):
+    self.active_relays[id].CleanUp()
+    del self.active_relays[id]
+    self.thermostat_api.UpdateRelayState(id, False)
 
   def UpdateLoop(self, interval=5):
     while not self.shutdown_requested.is_set():
-      print(self.active_relays)
-      for sensor in self.thermostat_api.GetActiveSensors():
-        temperature = ReadSensorTemperature(sensor["serial"])
-        self.thermostat_api.UpdateSensorTemperature(sensor["id"], temperature)
-        print(temperature)
+      for id, serial in self.thermostat_api.GetActiveSensors():
+        temperature = ReadSensorTemperature(serial)
+        self.thermostat_api.UpdateSensorTemperature(id, temperature)
 
-      for relay in self.thermostat_api.GetRelayEvents():
-        print(relay)
-        if relay["id"] not in self.active_relays:
-          self.active_relays[relay["id"]] = Relay(relay["channel"])
-
-        if not relay["enabled"]:
-          self.DisableRelays(relay)
+      for id, channel, state, enabled in self.thermostat_api.GetRelayEvents():
+        if id not in self.active_relays:
+          self.EnableRelay(id, channel, state)
+        elif not enabled:
+          self.DisableRelay(id)
         else:
-          self.active_relays[relay["id"]].SetState(relay["new_state"])
+          self.active_relays[id].SetState(state)
 
-        self.thermostat_api.UpdateRelayState(relay["id"], relay["new_state"])
+        self.thermostat_api.UpdateRelayState(id, state)
 
       self.shutdown_requested.wait(interval)
 
-    self.DisableRelays(self.active_relays)
+    active_relays = self.active_relays.copy()
+    for id in active_relays:
+      self.DisableRelay(id)
 
 
 if __name__ == "__main__":
+  logging.basicConfig(
+      filename="%s.log" % os.path.basename(__file__),
+      format="[%(asctime)s] %(levelname)s: %(message)s",
+      datefmt="%Y-%m-%d %H:%M:%S",
+      level=logging.INFO)
+
+  logging.info("Started.")
   Thermostat().UpdateLoop()
+  logging.info("Stopped.")

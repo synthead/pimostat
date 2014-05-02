@@ -1,14 +1,14 @@
 import mysql.connector
 
 
-class MySQLCursorDict(mysql.connector.cursor.MySQLCursor):
-  def _row_to_python(self, rowdata, desc=None):
-    row = super(MySQLCursorDict, self)._row_to_python(rowdata, desc)
-
-    if row:
-      return dict(zip(self.column_names, row))
-
-    return None
+# class MySQLCursorDict(mysql.connector.cursor.MySQLCursor):
+#   def _row_to_python(self, rowdata, desc=None):
+#     row = super(MySQLCursorDict, self)._row_to_python(rowdata, desc)
+#
+#     if row:
+#       return dict(zip(self.column_names, row))
+#
+#     return None
 
 
 class ThermostatAPI:
@@ -17,7 +17,7 @@ class ThermostatAPI:
     self.connection.autocommit = True
 
   def GetActiveSensors(self):
-    cursor = self.connection.cursor(cursor_class=MySQLCursorDict)
+    cursor = self.connection.cursor()
     cursor.execute("""
       SELECT
         id,
@@ -35,11 +35,12 @@ class ThermostatAPI:
     return sensors
 
   def GetActiveRelays(self):
-    cursor = self.connection.cursor(cursor_class=MySQLCursorDict)
+    cursor = self.connection.cursor()
     cursor.execute("""
       SELECT
         id,
-        channel
+        channel,
+        state
 
       FROM
         relays
@@ -81,12 +82,12 @@ class ThermostatAPI:
     cursor.close()
 
   def GetRelayEvents(self):
-    cursor = self.connection.cursor(cursor_class=MySQLCursorDict)
+    cursor = self.connection.cursor()
     cursor.execute("""
       SELECT
         relays.id,
         relays.channel,
-        ! relays.state AS new_state,
+        ! relays.state,
         relays.enabled
 
       FROM
