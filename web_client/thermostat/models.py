@@ -2,18 +2,21 @@ from django.db import models
 
 
 class Relay(models.Model):
+  name = models.CharField(max_length=255)
   channel = models.IntegerField(unique=True)
-  state = models.NullBooleanField()
+  actuated = models.NullBooleanField()
   enabled = models.BooleanField(default=False)
 
 
 class Sensor(models.Model):
+  name = models.CharField(max_length=255)
   serial = models.CharField(max_length=255, unique=True)
   temperature = models.DecimalField(max_digits=6, decimal_places=3, null=True)
   enabled = models.BooleanField(default=False)
 
 
 class Thermostat(models.Model):
+  name = models.CharField(max_length=255)
   relay = models.ForeignKey(Relay)
   sensor = models.ForeignKey(Sensor)
   desired_temperature = models.DecimalField(
