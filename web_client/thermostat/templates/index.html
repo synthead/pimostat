@@ -13,6 +13,13 @@
     <script src="{% static "js/jquery-ui-1.10.4.custom.min.js" %}"></script>
   </head>
   <body>
-    Hello, world!
+    <div>Thermostat</div>
+    {% for form in forms %}
+      <form action="/forms/update_thermostat/{{ form.instance.pk }}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Submit">
+      </form>
+    {% endfor %}
   </body>
 </html>
