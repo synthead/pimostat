@@ -6,16 +6,20 @@ from celery.signals import worker_shutdown
 from celery.utils.log import get_task_logger
 
 
+TESTING_WITHOUT_HARDWARE = True
+
 logger = get_task_logger(__name__)
 
 
 @celeryd_init.connect
 def CelerydInit(**kwargs):
-  import RPi.GPIO as GPIO
-  from celery.task.control import discard_all
+  if not TESTING_WITHOUT_HARDWARE:
+    import RPi.GPIO as GPIO
 
-  GPIO.setmode(GPIO.BCM)
-  GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+
+  from celery.task.control import discard_all
 
   discard_all()
 
@@ -46,12 +50,13 @@ def UpdateSensor(sensor):
   try:
     sensor_path = "/sys/bus/w1/devices/%s/w1_slave" % sensor.serial
 
-    # FIXME: Remove; used for testing.
-    # import random
-    # sensor_data = "t=%d" % random.randint(23000, 24000)
+    if TESTING_WITHOUT_HARDWARE:
+      import random
 
-    with open(sensor_path) as sensor_file:
-      sensor_data = sensor_file.read()
+      sensor_data = "t=%d" % random.randint(23000, 24000)
+    else:
+      with open(sensor_path) as sensor_file:
+        sensor_data = sensor_file.read()
 
     match = re.search("t=(\d+)(\d{3})", sensor_data)
     if match:
@@ -75,14 +80,15 @@ def UpdateSensor(sensor):
         "sensor!", sensor_path, sensor.name)
     sensor.enabled = False
   finally:
-    True
     sensor.save()
 
 
 @celery_pimostat.task
 def ActuateRelay(relay, actuated):
-  import RPi.GPIO as GPIO
-  GPIO.setup(relay.channel, GPIO.OUT, initial=actuated)
+  if not TESTING_WITHOUT_HARDWARE:
+    import RPi.GPIO as GPIO
+
+    GPIO.setup(relay.channel, GPIO.OUT, initial=actuated)
 
   relay.actuated = actuated
   relay.save()
@@ -113,4 +119,6 @@ def CheckThermostats(filter_args):
           Q(relay__enabled=True) &
           Q(sensor__enabled=True)))),
       **filter_args):
-    ActuateRelay.delay(thermostat.relay, not thermostat.relay.actuated)
+    # Calling this with .delay() produces this error: http://pastie.org/9240631
+    # ActuateRelay.delay(thermostat.relay, not thermostat.relay.actuated)
+    ActuateRelay(thermostat.relay, not thermostat.relay.actuated)
