@@ -5,8 +5,9 @@ name = thermostat
 user = thermostat
 password = hackme
 
-[secrets]
+[django]
 secret_key = hackme
+allowed_hosts = localhost
 
 [celery]
 broker_url = amqp://
