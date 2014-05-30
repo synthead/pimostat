@@ -1,13 +1,16 @@
 import os
+
+from datetime import timedelta
+
 from configparser import RawConfigParser
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 config = RawConfigParser()
-config.read(os.path.join(BASE_DIR, "project", "settings.ini"))
+config.read(os.path.join(BASE_DIR, "thermostat", "settings.ini"))
 
-SECRET_KEY = config.get("secrets", "secret_key")
+SECRET_KEY = config.get("django", "secret_key")
 
 DATABASES = {
     "default": {
@@ -26,7 +29,7 @@ INSTALLED_APPS = (
     "thermostat"
 )
 
-ROOT_URLCONF = "project.urls"
+ROOT_URLCONF = "thermostat.urls"
 STATIC_URL = "/static/"
 
 LANGUAGE_CODE = "en-us"
@@ -39,6 +42,30 @@ USE_TZ = True
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = True
+import sys
+if "/usr/bin/celery" in sys.argv:
+  DEBUG = False
+else:
+  DEBUG = True
+
 TEMPLATE_DEBUG = True
-ALLOWED_HOSTS = []
+# FIXME
+# ALLOWED_HOSTS = config.get("django", "allowed_hosts").replace(" ", "").split(
+#     ",")
+
+
+# Celery.
+
+CELERYBEAT_SCHEDULE = {
+  "UpdateEnabledSensors": {
+    "task": "thermostat.hardware_controller.UpdateEnabledSensors",
+    "schedule": timedelta(seconds=5)
+  }
+}
+
+BROKER_URL = config.get("celery", "broker_url")
+CELERY_RESULT_BACKEND = config.get("celery", "result_backend")
+
+CELERY_INCLUDE = ["thermostat.hardware_controller"]
+
+CELERY_ACCEPT_CONTENT = ["pickle"]

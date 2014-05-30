@@ -17,6 +17,7 @@
     {% for form in forms %}
       <form action="/forms/update_thermostat/{{ form.instance.pk }}" method="post">
         {% csrf_token %}
+        {{ form.instance.sensor.temperature }}
         {{ form.as_p }}
         <input type="submit" value="Submit">
       </form>

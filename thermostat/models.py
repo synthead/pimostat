@@ -1,28 +1,56 @@
 from django.db import models
 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from thermostat.hardware_controller import CheckThermostats
+
 
 class Relay(models.Model):
-  name = models.CharField(max_length=255)
+  name = models.CharField(default="Relay", max_length=255)
+  enabled = models.BooleanField(default=True)
   channel = models.IntegerField(unique=True)
-  actuated = models.BooleanField()
-  enabled = models.BooleanField()
+  actuated = models.BooleanField(default=False)
+
+  class Meta:
+    db_table = "relay"
 
 
 class Sensor(models.Model):
-  name = models.CharField(max_length=255)
+  name = models.CharField(default="Sensor", max_length=255)
+  enabled = models.BooleanField(default=True)
   serial = models.CharField(max_length=255, unique=True)
   temperature = models.DecimalField(max_digits=6, decimal_places=3, null=True)
-  enabled = models.BooleanField()
+  update_frequency = models.DecimalField(
+      max_digits=4, decimal_places=1, default=5)
+
+  class Meta:
+    db_table = "sensor"
 
 
 class Thermostat(models.Model):
-  name = models.CharField(max_length=255)
-  relay = models.ForeignKey(Relay)
+  name = models.CharField(default="Thermostat", max_length=255)
+  enabled = models.BooleanField(default=False)
+  relay = models.ForeignKey(Relay, unique=True)
   sensor = models.ForeignKey(Sensor)
   desired_temperature = models.DecimalField(
-      max_digits=6, decimal_places=3, null=True)
+      max_digits=6, decimal_places=3, default=16)
   lower_deviation = models.DecimalField(
       max_digits=6, decimal_places=3, default=0.5)
   upper_deviation = models.DecimalField(
-      max_digits=6, decimal_places=3, default=0.5)
-  enabled = models.BooleanField()
+      max_digits=6, decimal_places=3, default=0.3)
+
+  class Meta:
+    db_table = "thermostat"
+
+
+@receiver(post_save)
+def SensorOrThermostatUpdated(sender, **kwargs):
+  if sender is Sensor:
+    filter_args = {"sensor": kwargs["instance"]}
+  if sender is Thermostat:
+    filter_args = {}
+  else:
+    return
+
+  CheckThermostats.delay(filter_args)

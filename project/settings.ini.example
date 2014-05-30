@@ -1,9 +1,0 @@
-[database]
-host = localhost
-port = 3306
-name = thermostat
-user = thermostat_web
-password = RUsDSZNo9dmcAq9bMLga5tdztwKGIN2zhPq8AImUdGtQn7ij1s
-
-[secrets]
-secret_key = 6if&$*mz!h(^o-h-p@s-doo2aqt4d25wn_&=wzye)yq(i*vpz4

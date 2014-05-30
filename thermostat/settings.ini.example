@@ -1,0 +1,13 @@
+[database]
+host = localhost
+port = 3306
+name = thermostat
+user = thermostat
+password = hackme
+
+[secrets]
+secret_key = hackme
+
+[celery]
+broker_url = amqp://
+result_backend = amqp://

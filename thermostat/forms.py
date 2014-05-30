@@ -10,4 +10,3 @@ class ThermostatForm(ModelForm):
         "desired_temperature",
         "enabled"
     ]
-
