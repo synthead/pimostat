@@ -8,7 +8,7 @@ from configparser import RawConfigParser
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 config = RawConfigParser()
-config.read(os.path.join(BASE_DIR, "thermostat", "settings.ini"))
+config.read(os.path.join(BASE_DIR, "pimostat", "settings.ini"))
 
 SECRET_KEY = config.get("django", "secret_key")
 
@@ -26,10 +26,10 @@ DATABASES = {
 
 INSTALLED_APPS = (
     "django.contrib.staticfiles",
-    "thermostat"
+    "pimostat"
 )
 
-ROOT_URLCONF = "thermostat.urls"
+ROOT_URLCONF = "pimostat.urls"
 STATIC_URL = "/static/"
 
 LANGUAGE_CODE = "en-us"
@@ -58,7 +58,7 @@ TEMPLATE_DEBUG = True
 
 CELERYBEAT_SCHEDULE = {
   "UpdateEnabledSensors": {
-    "task": "thermostat.hardware_controller.UpdateEnabledSensors",
+    "task": "pimostat.hardware_controller.UpdateEnabledSensors",
     "schedule": timedelta(seconds=5)
   }
 }
@@ -66,6 +66,6 @@ CELERYBEAT_SCHEDULE = {
 BROKER_URL = config.get("celery", "broker_url")
 CELERY_RESULT_BACKEND = config.get("celery", "result_backend")
 
-CELERY_INCLUDE = ["thermostat.hardware_controller"]
+CELERY_INCLUDE = ["pimostat.hardware_controller"]
 
 CELERY_ACCEPT_CONTENT = ["pickle"]

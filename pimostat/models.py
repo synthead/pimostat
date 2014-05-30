@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from thermostat.hardware_controller import CheckThermostats
+from pimostat.hardware_controller import CheckThermostats
 
 
 class Relay(models.Model):

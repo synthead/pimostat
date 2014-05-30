@@ -2,7 +2,7 @@ from django.conf.urls import include
 from django.conf.urls import patterns
 from django.conf.urls import url
 
-from thermostat import views
+from pimostat import views
 
 
 urlpatterns = patterns("",

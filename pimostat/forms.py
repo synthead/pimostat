@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 
-from thermostat.models import Thermostat
+from pimostat.models import Thermostat
 
 
 class ThermostatForm(ModelForm):

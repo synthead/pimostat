@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from thermostat.models import Relay
-from thermostat.models import Sensor
-from thermostat.models import Thermostat
+from pimostat.models import Relay
+from pimostat.models import Sensor
+from pimostat.models import Thermostat
 
-from thermostat.forms import ThermostatForm
+from pimostat.forms import ThermostatForm
 
 
 def Index(request):

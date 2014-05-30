@@ -1,4 +1,4 @@
-from thermostat.celery import celery_thermostat
+from pimostat.celery import celery_pimostat
 
 from celery.signals import celeryd_init
 from celery.signals import worker_shutdown
@@ -22,15 +22,15 @@ def CelerydInit(**kwargs):
 
 @worker_shutdown.connect
 def WorkerShutdown(**kwargs):
-  from thermostat.models import Relay
+  from pimostat.models import Relay
 
   for relay in Relay.objects.filter(enabled=True):
     ActuateRelay(relay, False)
 
 
-@celery_thermostat.task
+@celery_pimostat.task
 def UpdateEnabledSensors():
-  from thermostat.models import Sensor
+  from pimostat.models import Sensor
 
   for sensor in Sensor.objects.filter(enabled=True):
     # FIXME: Some strange race condition causes this: http://pastie.org/9238659
@@ -38,7 +38,7 @@ def UpdateEnabledSensors():
     UpdateSensor(sensor)
 
 
-@celery_thermostat.task
+@celery_pimostat.task
 def UpdateSensor(sensor):
   import re
   import decimal
@@ -79,7 +79,7 @@ def UpdateSensor(sensor):
     sensor.save()
 
 
-@celery_thermostat.task
+@celery_pimostat.task
 def ActuateRelay(relay, actuated):
   import RPi.GPIO as GPIO
   GPIO.setup(relay.channel, GPIO.OUT, initial=actuated)
@@ -92,9 +92,9 @@ def ActuateRelay(relay, actuated):
       ("deactuated", "actuated")[relay.actuated])
 
 
-@celery_thermostat.task
+@celery_pimostat.task
 def CheckThermostats(filter_args):
-  from thermostat.models import Thermostat
+  from pimostat.models import Thermostat
 
   from django.db.models import F
   from django.db.models import Q

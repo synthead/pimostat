@@ -1,8 +1,8 @@
 [database]
 host = localhost
 port = 3306
-name = thermostat
-user = thermostat
+name = pimostat
+user = pimostat
 password = hackme
 
 [django]
