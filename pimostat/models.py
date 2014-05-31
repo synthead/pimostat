@@ -48,7 +48,7 @@ class Thermostat(models.Model):
 def SensorOrThermostatUpdated(sender, **kwargs):
   if sender is Sensor:
     filter_args = {"sensor": kwargs["instance"]}
-  if sender is Thermostat:
+  elif sender is Thermostat:
     filter_args = {}
   else:
     return
