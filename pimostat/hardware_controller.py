@@ -6,7 +6,7 @@ from celery.signals import worker_shutdown
 from celery.utils.log import get_task_logger
 
 
-TESTING_WITHOUT_HARDWARE = True
+TESTING_WITHOUT_HARDWARE = False
 
 logger = get_task_logger(__name__)
 
