@@ -60,26 +60,31 @@ def UpdateSensor(sensor):
 
     match = re.search("t=(\d+)(\d{3})", sensor_data)
     if match:
-      sensor.temperature = decimal.Decimal(".".join(match.groups()))
-      logger.warning(
-          "Updated sensor \"%s\" to %.3f degrees.", sensor.name,
-          sensor.temperature)
+      temperature = decimal.Decimal(".".join(match.groups()))
+      if temperature != sensor.temperature:
+        sensor.temperature = decimal.Decimal(".".join(match.groups()))
+        sensor.save()
+
+        logger.warning(
+            "Updated sensor \"%s\" to %.3f degrees.", sensor.name,
+            sensor.temperature)
     else:
       logger.error(
           "File \"%s\" contained unexpected data for sensor \"%s\"!  "
           "Disabling sensor!", sensor_path, sensor.name)
       sensor.enabled = False
+      sensor.save()
   except FileNotFoundError:
     logger.error(
         "File \"%s\" not found for sensor \"%s\"!  Disabling sensor!",
         sensor_path, sensor.name)
     sensor.enabled = False
+    sensor.save()
   except PermissionError:
     logger.error(
         "Permission denied to file \"%s\" for sensor \"%s\"!  Disabling "
         "sensor!", sensor_path, sensor.name)
     sensor.enabled = False
-  finally:
     sensor.save()
 
 
