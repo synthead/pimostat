@@ -1,3 +1,7 @@
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import HttpResponseServerError
@@ -25,10 +29,14 @@ def UpdateThermostat(request):
   return HttpResponse("Submitted.")
 
 
-def GetTemperature(request, pk=None):
+def PollThermostat(request, pk=None):
   try:
-    sensor = Sensor.objects.get(pk=pk)
-    return HttpResponse(sensor.temperature)
-  except DoesNotExist:
+    thermostat = Thermostat.objects.get(pk=pk)
+    json_response = json.dumps({
+        "temperature": thermostat.sensor.temperature,
+        "actuated": thermostat.relay.actuated
+    }, cls=DjangoJSONEncoder)
+    return HttpResponse(json_response)
+  except Thermostat.DoesNotExist:
     return HttpResponseServerError(
         "Sensor with primary key %d does not exist." % pk)

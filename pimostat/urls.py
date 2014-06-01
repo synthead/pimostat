@@ -9,6 +9,6 @@ urlpatterns = patterns("",
   url(r"^$", views.Index, name="index"),
   url(r"^forms/update_thermostat$", views.UpdateThermostat,
       name="update_thermostat"),
-  url(r"^get_temperature/(?P<pk>\d+)$", views.GetTemperature,
-      name="get_temperature")
+  url(r"^poll_thermostat/(?P<pk>\d+)$", views.PollThermostat,
+      name="poll_thermostat")
 )

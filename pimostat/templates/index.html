@@ -26,8 +26,16 @@
             <td>
               Current temperature ({{ form.instance.sensor.name }}): 
             </td>
-            <td id="sensor-{{ form.instance.sensor.pk }}-temperature">
+            <td id="temperature-{{ form.instance.pk }}">
               {{ form.instance.sensor.temperature }}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Replay actuated ({{ form.instance.relay.name }}):
+            </td>
+            <td id="actuated-{{ form.instance.pk }}">
+              {{ form.instance.relay.actuated }}
             </td>
           </tr>
           <tr>
@@ -69,7 +77,7 @@
   </body>
   <script>
     {% for form in thermostat_formset %}
-      pollSensor({{ form.instance.sensor.pk }});
+      pollThermostat({{ form.instance.pk }});
     {% endfor %}
   </script>
 </html>
