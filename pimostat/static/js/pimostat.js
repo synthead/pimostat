@@ -1,21 +1,25 @@
-function pollThermostat(pk) {
-  var ajax = new XMLHttpRequest();
+$(document).ready(function() {
+  $(".thermostat-submit").click(function() {
+    var button = this;
 
-  ajax.onreadystatechange = function() {
-    if (ajax.readyState == 4) {
-      if (ajax.status == 200) {
-        var response = JSON.parse(ajax.responseText);
-
-        document.getElementById(
-            "temperature-" + pk).innerHTML = response.temperature;
-        document.getElementById("actuated-" + pk).innerHTML = (
-            response.actuated ? "True" : "False");
-
-        setTimeout(pollThermostat, 5000, pk);
+    $.ajax({
+      type: "POST",
+      url: "/update_thermostat",
+      data: $(button.parentNode).serialize(),
+      beforeSend: function() {
+        $(button).prop("disabled", true);
       }
-    }
-  }
+    }).done(function() {
+      $(button).prop("disabled", false);
+    });
+  });
+});
 
-  ajax.open("GET", "/poll_thermostat/" + pk, true);
-  ajax.send();
+function pollThermostat(pk) {
+  $.getJSON("/poll_thermostat/" + pk, function(response) {
+    $("#temperature-" +pk).text(response.temperature);
+    $("#actuated-" + pk).text((response.actuated ? "True" : "False"));
+  });
+
+  setTimeout(pollThermostat, 5000, pk);
 }

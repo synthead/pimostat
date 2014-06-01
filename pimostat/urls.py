@@ -6,9 +6,7 @@ from pimostat import views
 
 
 urlpatterns = patterns("",
-  url(r"^$", views.Index, name="index"),
-  url(r"^forms/update_thermostat$", views.UpdateThermostat,
-      name="update_thermostat"),
-  url(r"^poll_thermostat/(?P<pk>\d+)$", views.PollThermostat,
-      name="poll_thermostat")
+  url(r"^$", views.Index),
+  url(r"^update_thermostat$", views.UpdateThermostat),
+  url(r"^poll_thermostat/(?P<pk>\d+)$", views.PollThermostat)
 )
