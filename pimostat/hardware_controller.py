@@ -95,12 +95,13 @@ def ActuateRelay(relay, actuated):
 
     GPIO.setup(relay.channel, GPIO.OUT, initial=actuated)
 
-  relay.actuated = actuated
-  relay.save()
+  if relay.actuated is not actuated:
+    relay.actuated = actuated
+    relay.save()
 
-  logger.warning(
-      "Relay \"%s\" on channel %d %s.", relay.name, relay.channel,
-      ("deactuated", "actuated")[relay.actuated])
+    logger.warning(
+        "Relay \"%s\" on channel %d %s.", relay.name, relay.channel,
+        ("deactuated", "actuated")[relay.actuated])
 
 
 @celery_pimostat.task
