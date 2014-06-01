@@ -6,21 +6,45 @@
     <meta charset="utf-8">
     <title>Thermostat</title>
   
-    <link href="{% static "css/thermostat.css" %}" rel="stylesheet">
+    <link href="{% static "css/pimostat.css" %}" rel="stylesheet">
+    <script src="{% static "js/pimostat.js" %}"></script>
   
     <link href="{% static "css/jquery-ui-1.10.4.custom.min.css" %}" rel="stylesheet">
     <script src="{% static "js/jquery-1.11.0.min.js" %}"></script>
     <script src="{% static "js/jquery-ui-1.10.4.custom.min.js" %}"></script>
   </head>
   <body>
-    <div>Thermostat</div>
-    {% for form in forms %}
-      <form action="/forms/update_thermostat/{{ form.instance.pk }}" method="post">
-        {% csrf_token %}
-        {{ form.instance.sensor.temperature }}
-        {{ form.as_p }}
+    <h1>Pimostat</h1>
+    <form action="/forms/update_thermostat" method="post">
+      {% csrf_token %}
+      {{ thermostat_formset.management_form }}
+      {% for form in thermostat_formset %}
+        <h2>{{ form.instance.name }}</h2>
+        <table>
+          <tr>
+            <td>
+              Current temperature ({{ form.instance.sensor.name }}): 
+            </td>
+            <td id="sensor-{{ form.instance.sensor.pk }}-temperature">
+              {{ form.instance.sensor.temperature }}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Desired temperature ({{ form.instance.relay.name }}):
+            </td>
+            <td>
+              {{ form.desired_temperature }}
+            </td>
+          </tr>
+        </table>
         <input type="submit" value="Submit">
-      </form>
-    {% endfor %}
+      {% endfor %}
+    </form>
   </body>
+  <script>
+    {% for form in thermostat_formset %}
+      pollSensor({{ form.instance.sensor.pk }});
+    {% endfor %}
+  </script>
 </html>

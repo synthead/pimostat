@@ -8,5 +8,7 @@ class ThermostatForm(ModelForm):
     model = Thermostat
     fields = [
         "desired_temperature",
+        "upper_deviation",
+        "lower_deviation",
         "enabled"
     ]
