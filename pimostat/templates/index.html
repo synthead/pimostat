@@ -19,6 +19,7 @@
       {% csrf_token %}
       {{ thermostat_formset.management_form }}
       {% for form in thermostat_formset %}
+        {{ form.id }}
         <h2>{{ form.instance.name }}</h2>
         <table>
           <tr>
@@ -35,6 +36,22 @@
             </td>
             <td>
               {{ form.desired_temperature }}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Upper deviation ({{ form.instance.relay.name }}):
+            </td>
+            <td>
+              {{ form.upper_deviation }}
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Lower deviation ({{ form.instance.relay.name }}):
+            </td>
+            <td>
+              {{ form.lower_deviation }}
             </td>
           </tr>
         </table>
