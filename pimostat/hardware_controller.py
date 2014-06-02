@@ -1,7 +1,3 @@
-import os
-
-from configparser import RawConfigParser
-
 from pimostat.celery import celery_pimostat
 
 from celery.signals import celeryd_init
@@ -9,23 +5,16 @@ from celery.signals import worker_shutdown
 
 from celery.utils.log import get_task_logger
 
+from pimostat.settings import PIMOSTAT_TESTING_WITHOUT_HARDWARE
 
 logger = get_task_logger(__name__)
-
-
-config = RawConfigParser()
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-config.read(os.path.join(BASE_DIR, "pimostat", "settings.ini"))
-
-TESTING_WITHOUT_HARDWARE = config.getboolean(
-    "celery", "testing_without_hardware")
 
 
 @celeryd_init.connect
 def CelerydInit(**kwargs):
   from celery.task.control import discard_all
 
-  if not TESTING_WITHOUT_HARDWARE:
+  if not PIMOSTAT_TESTING_WITHOUT_HARDWARE:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -59,7 +48,7 @@ def UpdateSensor(sensor):
   try:
     sensor_path = "/sys/bus/w1/devices/%s/w1_slave" % sensor.serial
 
-    if TESTING_WITHOUT_HARDWARE:
+    if PIMOSTAT_TESTING_WITHOUT_HARDWARE:
       import random
       sensor_data = "t=%d" % random.randint(23000, 24000)
     else:
@@ -98,7 +87,7 @@ def UpdateSensor(sensor):
 
 @celery_pimostat.task
 def ActuateRelay(relay, actuated):
-  if not TESTING_WITHOUT_HARDWARE:
+  if not PIMOSTAT_TESTING_WITHOUT_HARDWARE:
     import RPi.GPIO as GPIO
     GPIO.setup(relay.channel, GPIO.OUT, initial=actuated)
 

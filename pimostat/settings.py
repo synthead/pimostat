@@ -10,6 +10,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 config = RawConfigParser()
 config.read(os.path.join(BASE_DIR, "pimostat", "settings.ini"))
 
+
+# Django settings.
+
 SECRET_KEY = config.get("django", "secret_key")
 
 DATABASES = {
@@ -42,19 +45,20 @@ USE_TZ = True
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 # SECURITY WARNING: don't run with debug turned on in production!
 
-import sys
-if "/usr/bin/celery" in sys.argv:
-  DEBUG = False
-else:
-  DEBUG = True
-
 TEMPLATE_DEBUG = True
 # FIXME
 # ALLOWED_HOSTS = config.get("django", "allowed_hosts").replace(" ", "").split(
 #     ",")
 
 
-# Celery.
+# Celery settings.
+
+# Hack to make celery run in debug mode.
+import sys
+if "/usr/bin/celery" in sys.argv:
+  DEBUG = False
+else:
+  DEBUG = True
 
 CELERYBEAT_SCHEDULE = {
   "UpdateEnabledSensors": {
@@ -70,3 +74,9 @@ CELERY_RESULT_BACKEND = config.get("celery", "result_backend")
 CELERY_INCLUDE = ["pimostat.hardware_controller"]
 
 CELERY_ACCEPT_CONTENT = ["pickle"]
+
+
+# Pimostat settings.
+
+PIMOSTAT_TESTING_WITHOUT_HARDWARE = config.getboolean(
+    "celery", "testing_without_hardware")
