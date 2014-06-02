@@ -51,6 +51,14 @@ TEMPLATE_DEBUG = True
 #     ",")
 
 
+# Pimostat settings.
+
+PIMOSTAT_TESTING_WITHOUT_HARDWARE = config.getboolean(
+    "pimostat", "testing_without_hardware")
+PIMOSTAT_SENSOR_UPDATE_FREQUENCY = config.getint(
+    "pimostat", "sensor_update_frequency")
+
+
 # Celery settings.
 
 # Hack to make celery run in debug mode.
@@ -64,7 +72,7 @@ CELERYBEAT_SCHEDULE = {
   "UpdateEnabledSensors": {
     "task": "pimostat.hardware_controller.UpdateEnabledSensors",
     # FIXME: Race condition if this is 1 second.
-    "schedule": timedelta(seconds=10)
+    "schedule": timedelta(seconds=PIMOSTAT_SENSOR_UPDATE_FREQUENCY)
   }
 }
 
@@ -74,9 +82,3 @@ CELERY_RESULT_BACKEND = config.get("celery", "result_backend")
 CELERY_INCLUDE = ["pimostat.hardware_controller"]
 
 CELERY_ACCEPT_CONTENT = ["pickle"]
-
-
-# Pimostat settings.
-
-PIMOSTAT_TESTING_WITHOUT_HARDWARE = config.getboolean(
-    "celery", "testing_without_hardware")

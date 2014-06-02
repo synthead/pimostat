@@ -13,13 +13,18 @@ from pimostat.models import Thermostat
 
 from pimostat.forms import ThermostatForm
 
+from pimostat.settings import PIMOSTAT_SENSOR_UPDATE_FREQUENCY
+
 
 ThermostatModelFormSet = modelformset_factory(
     Thermostat, form=ThermostatForm, extra=0)
 
 
 def Index(request):
-  context = {"thermostat_formset": ThermostatModelFormSet}
+  context = {
+      "thermostat_formset": ThermostatModelFormSet,
+      "update_frequency": PIMOSTAT_SENSOR_UPDATE_FREQUENCY
+  }
   return render(request, "index.html", context)
 
 

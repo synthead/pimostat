@@ -13,8 +13,10 @@ $(".thermostat-submit").click(function() {
   });
 });
 
+var update_frequency = {{ update_frequency }} * 1000;
+
 {% for form in thermostat_formset %}
-  setTimeout(pollThermostat, 10000, {{ form.instance.pk }});
+  setTimeout(pollThermostat, update_frequency, {{ form.instance.pk }});
 {% endfor %}
 
 function pollThermostat(pk) {
@@ -23,5 +25,5 @@ function pollThermostat(pk) {
     $("#actuated-" + pk).text((response.actuated ? "True" : "False"));
   });
 
-  setTimeout(pollThermostat, 10000, pk);
+  setTimeout(pollThermostat, update_frequency, pk);
 }
