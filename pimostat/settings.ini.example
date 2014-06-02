@@ -10,6 +10,6 @@ secret_key = hackme
 allowed_hosts = localhost
 
 [celery]
-broker_url = amqp://
-result_backend = amqp://
+broker_url = redis://
+result_backend = redis://
 testing_without_hardware = false
