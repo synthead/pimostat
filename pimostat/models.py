@@ -44,13 +44,11 @@ class Thermostat(models.Model):
     db_table = "thermostat"
 
 
-@receiver(post_save)
-def SensorOrThermostatUpdated(sender, **kwargs):
-  if sender is Sensor:
-    filter_args = {"sensor": kwargs["instance"]}
-  elif sender is Thermostat:
-    filter_args = {}
-  else:
-    return
+@receiver(post_save, sender=Sensor)
+def SensorUpdated(sender, **kwargs):
+  CheckThermostats.delay(sensor=kwargs["instance"])
 
-  CheckThermostats.delay(filter_args)
+
+@receiver(post_save, sender=Thermostat)
+def ThermostatUpdated(sender, **kwargs):
+  CheckThermostats.delay()

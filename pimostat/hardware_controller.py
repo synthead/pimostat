@@ -105,7 +105,7 @@ def ActuateRelay(relay, actuated):
 
 
 @celery_pimostat.task
-def CheckThermostats(filter_args):
+def CheckThermostats(**filter_args):
   from pimostat.models import Thermostat
 
   from django.db.models import F
