@@ -60,7 +60,7 @@ CELERYBEAT_SCHEDULE = {
   "UpdateEnabledSensors": {
     "task": "pimostat.hardware_controller.UpdateEnabledSensors",
     # FIXME: Race condition if this is 1 second.
-    "schedule": timedelta(seconds=5)
+    "schedule": timedelta(seconds=10)
   }
 }
 

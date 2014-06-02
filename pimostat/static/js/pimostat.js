@@ -21,5 +21,5 @@ function pollThermostat(pk) {
     $("#actuated-" + pk).text((response.actuated ? "True" : "False"));
   });
 
-  setTimeout(pollThermostat, 5000, pk);
+  setTimeout(pollThermostat, 10000, pk);
 }

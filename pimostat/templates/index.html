@@ -74,7 +74,7 @@
   </body>
   <script>
     {% for form in thermostat_formset %}
-      setTimeout(pollThermostat, 5000, {{ form.instance.pk }});
+      setTimeout(pollThermostat, 10000, {{ form.instance.pk }});
     {% endfor %}
   </script>
 </html>
