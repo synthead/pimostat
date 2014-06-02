@@ -4,10 +4,9 @@
 <html lang="us">
   <head>
     <meta charset="utf-8">
-    <title>Thermostat</title>
+    <title>Pimostat</title>
     <link href="{% static "css/pimostat.css" %}" rel="stylesheet">
     <script src="{% static "js/jquery-1.11.1.min.js" %}"></script>
-    <script src="{% static "js/pimostat.js" %}"></script>
   </head>
   <body>
     <h1>Pimostat</h1>
@@ -36,7 +35,7 @@
           </tr>
           <tr>
             <td>
-              Desired temperature ({{ form.instance.relay.name }}):
+              Desired temperature:
             </td>
             <td>
               {{ form.desired_temperature }}
@@ -44,7 +43,7 @@
           </tr>
           <tr>
             <td>
-              Upper deviation ({{ form.instance.relay.name }}):
+              Upper deviation:
             </td>
             <td>
               {{ form.upper_deviation }}
@@ -52,7 +51,7 @@
           </tr>
           <tr>
             <td>
-              Lower deviation ({{ form.instance.relay.name }}):
+              Lower deviation:
             </td>
             <td>
               {{ form.lower_deviation }}
@@ -73,8 +72,6 @@
     </form>
   </body>
   <script>
-    {% for form in thermostat_formset %}
-      setTimeout(pollThermostat, 10000, {{ form.instance.pk }});
-    {% endfor %}
+    {% include "index.js" %}
   </script>
 </html>
