@@ -12,3 +12,4 @@ allowed_hosts = localhost
 [celery]
 broker_url = amqp://
 result_backend = amqp://
+testing_without_hardware = false
