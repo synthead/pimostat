@@ -2,14 +2,13 @@ $(".thermostat-submit").click(function() {
   var button = this;
   var pk = this.id.replace(/submit-/, "");
 
+  clearInterval(pollers[pk]);
+  $(button).prop("disabled", true);
+
   $.ajax({
     type: "POST",
     url: "/update_thermostat",
     data: $(button.parentNode).serialize(),
-    beforeSend: function() {
-      clearInterval(pollers[pk]);
-      $(button).prop("disabled", true);
-    }
   }).done(function() {
     pollThermostat(pk);
     $(button).prop("disabled", false);
