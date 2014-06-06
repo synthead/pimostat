@@ -3,6 +3,8 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from omnibus.api import publish
+
 from pimostat.hardware_controller import CheckThermostats
 
 
@@ -44,11 +46,21 @@ class Thermostat(models.Model):
     db_table = "thermostat"
 
 
-@receiver(post_save, sender=Sensor)
-def SensorUpdated(sender, **kwargs):
-  CheckThermostats.delay(sensor=kwargs["instance"])
-
-
 @receiver(post_save, sender=Thermostat)
 def ThermostatUpdated(sender, **kwargs):
   CheckThermostats.delay()
+
+
+@receiver(post_save, sender=Sensor)
+def SensorUpdated(sender, **kwargs):
+  CheckThermostats.delay(sensor=kwargs["instance"])
+  publish(
+      "pimostat", "sensor-%d" % kwargs["instance"].pk,
+      {"temperature": float(kwargs["instance"].temperature)})
+
+
+@receiver(post_save, sender=Relay)
+def RelayUpdated(sender, **kwargs):
+  publish(
+      "pimostat", "relay-%d" % kwargs["instance"].pk,
+      {"actuated": str(kwargs["instance"].actuated)})

@@ -29,7 +29,12 @@ DATABASES = {
 
 INSTALLED_APPS = (
     "django.contrib.staticfiles",
-    "pimostat"
+    "pimostat",
+    "omnibus"
+)
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "omnibus.context_processors.omnibus",
 )
 
 ROOT_URLCONF = "pimostat.urls"
