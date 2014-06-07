@@ -13,8 +13,8 @@ $(".thermostat-submit").click(function() {
 
 var omnibusConnection = new Omnibus(
     WebSocket,
-    "ws://" + document.domain + ":4242/ec"
-);  // FIXME: make dynamic
+    "{{ OMNIBUS_ENDPOINT }}"
+);
 
 var sensorChannel = omnibusConnection.openChannel("pimostat");
 
