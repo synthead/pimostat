@@ -33,6 +33,8 @@ INSTALLED_APPS = (
     "omnibus"
 )
 
+MIDDLEWARE_CLASSES = ()
+
 TEMPLATE_CONTEXT_PROCESSORS = (
     "omnibus.context_processors.omnibus",
 )
