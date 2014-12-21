@@ -54,9 +54,12 @@ def ThermostatUpdated(sender, **kwargs):
 @receiver(post_save, sender=Sensor)
 def SensorUpdated(sender, **kwargs):
   CheckThermostats.delay(sensor=kwargs["instance"])
+  if kwargs["instance"].temperature is not None:
+    kwargs["instance"].temperature = float(kwargs["instance"].temperature)
+
   publish(
       "pimostat", "sensor-%d" % kwargs["instance"].pk,
-      {"temperature": float(kwargs["instance"].temperature)})
+      {"temperature": kwargs["instance"].temperature})
 
 
 @receiver(post_save, sender=Relay)
