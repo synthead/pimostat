@@ -30,7 +30,8 @@ DATABASES = {
 INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "pimostat",
-    "omnibus"
+    "omnibus",
+    "jquery"
 )
 
 MIDDLEWARE_CLASSES = ()
